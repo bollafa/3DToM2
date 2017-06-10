@@ -78,7 +78,7 @@ inline void M2File::LoadTableOfData(unsigned __int32* pStart, size_t nElements, 
 	for (unsigned int i = 0; i < nElements; i++)
 	{
 		unsigned __int32* Place = (pStart + i * sizeof(Data::InternalData));
-		Data vTemp = (Data)(*((Data::InternalData*)((unsigned __int8*)pStart + ((unsigned __int8)i) * sizeof(Data::InternalData))));
+		Data vTemp = (Data)(*((Data::InternalData*)((unsigned __int8*)pStart + (i) * sizeof(Data::InternalData))));
 		vFinalArray.push_back(vTemp);
 	}
 }

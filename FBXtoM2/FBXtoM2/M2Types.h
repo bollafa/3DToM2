@@ -91,7 +91,7 @@ public: // Should be privated later?
 		operator M2Vertex() {
 
 			BoneWeight BoneTemp;
-//			std::copy(std::begin(bone_indices), std::end(bone_indices), std::end(BoneTemp.m_aBoneIndices));
+		//std::copy(std::begin(bone_indices), std::end(bone_indices), std::end(BoneTemp.m_aBoneIndices));
 			//std::copy(std::begin(bone_weights), std::end(bone_weights), std::end(BoneTemp.m_aBoneWeights));
 			std::copy_n(bone_indices, 4, std::begin(BoneTemp.m_aBoneIndices));
 			std::copy_n(bone_weights, 4, std::begin(BoneTemp.m_aBoneWeights));
