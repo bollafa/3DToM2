@@ -41,12 +41,15 @@ private:
 
 	Flags mBoneFlags;
 	C3Vector<float> mPivotPoint;
-
+	__int32 m_iKeyBoneID;
 public:
 
 	M2CompBone(C3Vector<float> &vPoint, unsigned __int32 &vFlags) : mPivotPoint(vPoint), mBoneFlags(Flags( vFlags )) { /*EMPTY*/ }
 	~M2CompBone() {/*EMPTY AS OF NOW*/} 
 
+	const __int32& GetKeyBoneID() { return m_iKeyBoneID;  }
+	const C3Vector<float>& GetPivotPoint() { return mPivotPoint; }
+	const unsigned __int32& GetFlags() { return mBoneFlags; }
 };
 
 /* COLLAPSED CLASS */
