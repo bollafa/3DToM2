@@ -1,7 +1,7 @@
 #include "M2File.h"
 #include "M2Types.h"
 #include <iostream>
-
+uint32_t* pStartAddy;
 /*void M2File::AddLookUpElement(std::map<uint32_t, __int16>& _inMap, uint32_t nArrayIndex, __int16 nPointToIndex)
 {
 	_inMap.insert(std::make_pair(nArrayIndex, nPointToIndex));// Make a pair with Array[nArrayIndex] = The Id Of this bone. ( the id:bone
@@ -39,10 +39,11 @@ void M2File::AddVertex(C3Vector<float> vPoint, C3Vector<float> vNormal, std::arr
 
 	//M2Skin.AddVertexProp(inVertexProp); // Vertex properties. Bone Indices. 
 }
-#define Cast(x,y) ((x)y)
+#define Cast(x,y) static_cast<x>(y)
 #define _M2Header(x) Cast(M2Header*,x)
 void M2File::LoadM2FromMemory(void * pStart)
 {
+	pStartAddy = (uint32_t*)pStart;
 	if (_M2Header(pStart)->magic != _byteswap_ulong('MD20'))
 	{
 		std::cout << "\t<SIGNATURE_NOT_CORRECT>\n" << _M2Header(pStart)->magic << std::endl;
@@ -52,8 +53,21 @@ void M2File::LoadM2FromMemory(void * pStart)
 
 	// Let's load the tables of data
 	LoadTableOfData( ( (unsigned __int32*)(((__int8*)pStart) + static_cast<M2Header*>(pStart)->vertices.tOffset)), _M2Header(pStart)->vertices.tSize, mVertexTable);
+	//Let's try with sequences:
+	LoadTableOfData(((unsigned __int32*)(((__int8*)pStart) + static_cast<M2Header*>(pStart)->sequences.tOffset)), _M2Header(pStart)->sequences.tSize, mSequenceTable);
+
+	std::cout << "\t<DEBUG_DATA::SPHERE_RADIUS(FLOAT):" << _M2Header(pStart)->collision_sphere_radius << ">" << std::endl;
+
+	// Now with colors:
+
+	LoadTableOfData(((unsigned __int32*)(((__int8*)pStart) + static_cast<M2Header*>(pStart)->colors.tOffset)), _M2Header(pStart)->colors.tSize, mColorTable);
 	
-	
+	// Now textures!
+	LoadTableOfData(((unsigned __int32*)(((__int8*)pStart) + static_cast<M2Header*>(pStart)->textures.tOffset)), _M2Header(pStart)->textures.tSize, mTextureTable);
+
+	// Now texture weigths!
+	LoadTableOfData(((unsigned __int32*)(((__int8*)pStart) + static_cast<M2Header*>(pStart)->texture_weights.tOffset)), _M2Header(pStart)->texture_weights.tSize, mTextureWeightTable);
+
 }
 
 void M2File::SkinFile::AddVertexProp(std::array<__int8, 4> VertexProp)
