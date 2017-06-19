@@ -29,31 +29,39 @@ struct C2Vector
 // TODO : QUADS
 
 
+inline float stf(unsigned short Short) {
+	return (Short / float(SHRT_MAX)) - 1.0f; // (Short > 0 ? Short-32767 : Short+32767)/32767.0;
+}
+
+inline unsigned short fts(float Float) {
+	return (Float + 1.0f) * float(SHRT_MAX); //  (short)(Float > 0 ? Float * 32767.0 - 32768 : Float * 32767.0 + 32768);
+}
+
+struct Quat16 {
+	__int16 x, y, z, w;
+};
+using M2CompQuat = Quat16;
+
+struct Quat32 {
+	float x, y, z, w;
+	Quat32(float _x, float _y, float _z, float _w) : x(_x),y(_y),z(_z),w(_w) {}
+};
+
+static const Quat32 Quat16ToQuat32(const Quat16 t)
+{
+	return Quat32(
+		float(t.x < 0 ? t.x + 32768 : t.x - 32767) / 32767.0f,
+		float(t.y < 0 ? t.y + 32768 : t.y - 32767) / 32767.0f,
+		float(t.z < 0 ? t.z + 32768 : t.z - 32767) / 32767.0f,
+		float(t.w < 0 ? t.w + 32768 : t.w - 32767) / 32767.0f);
+}
+
 
 // END : TODO
 
 /* !!! M2'S SPECIAL SNOWFLAKES GO HERE !!! */
 
-class M2CompBone 
-{
-private:
-	enum Flags : unsigned __int32 {
-	
-	
-	};
 
-	Flags mBoneFlags;
-	C3Vector<float> mPivotPoint;
-	__int32 m_iKeyBoneID;
-public:
-
-	M2CompBone(C3Vector<float> &vPoint, unsigned __int32 &vFlags) : mPivotPoint(vPoint), mBoneFlags(Flags( vFlags )) { /*EMPTY*/ }
-	~M2CompBone() {/*EMPTY AS OF NOW*/} 
-
-	const __int32& GetKeyBoneID() { return m_iKeyBoneID;  }
-	const C3Vector<float>& GetPivotPoint() { return mPivotPoint; }
-	const unsigned __int32& GetFlags() { return mBoneFlags; }
-};
 
 /* COLLAPSED CLASS */
 /*
@@ -625,3 +633,92 @@ public:
 	};
 	M2TextureWeight() {}
 };
+
+
+class M2CompBone
+{
+private:
+	enum Flags : unsigned __int32 {
+		BF_None = 0,
+		BF_Billboard = 8,
+		BF_Transformed = 512,
+		BF_BillboardAndTransformed = 520
+	};
+
+	Flags mBoneFlags;
+	C3Vector<float> mPivotPoint;
+	int32_t m_iKeyBoneID;
+	/* MAKE SETTERS LATER :*/
+	M2Track<C3Vector<float>> mTranslation;
+	M2Track<M2CompQuat> mRotation;
+	M2Track<C3Vector<float>> mScale;
+	int16_t mParentBone;
+	uint16_t mSubmeshID;
+public:
+	
+	
+
+
+	 struct InternalData
+	{
+		int32_t key_bone_id;            // Back-reference to the key bone lookup table. -1 if this is no key bone.
+		enum
+		{
+			spherical_billboard = 0x8,
+			cylindrical_billboard_lock_x = 0x10,
+			cylindrical_billboard_lock_y = 0x20,
+			cylindrical_billboard_lock_z = 0x40,
+			transformed = 0x200,
+			kinematic_bone = 0x400,       // MoP+: allow physics to influence this bone
+			helmet_anim_scaled = 0x1000,  // set blend_modificator to helmetAnimScalingRec.m_amount for this bone
+		};
+		uint32_t flags;
+		int16_t parent_bone;            // Parent bone ID or -1 if there is none.
+		uint16_t submesh_id;            // Mesh part ID OR uDistToParent?
+		union {                         // only >= BC ?
+			struct {
+				uint16_t uDistToFurthDesc;
+				uint16_t uZRatioOfChain;
+			} CompressData;
+			uint32_t boneNameCRC;
+		};
+		M2Track_cint<C3Vector<float>> translation;
+		/*#if  VERSION <= Vanilla
+		M2Track<C4Quaternion> rotation;
+		#else*/
+		M2Track_cint<M2CompQuat> rotation;   // compressed values, default is (32767,32767,32767,65535) == (0,0,0,1) == identity
+										//#endif
+		M2Track_cint<C3Vector<float>> scale;
+		C3Vector<float> pivot;                 // The pivot point of that bone.
+
+		operator M2CompBone()
+		{
+			M2CompBone boneTemp;
+			// just basic data
+			boneTemp.m_iKeyBoneID = key_bone_id;
+			boneTemp.mBoneFlags = Flags(flags);
+			boneTemp.mPivotPoint = pivot;
+			boneTemp.mSubmeshID = submesh_id;
+			boneTemp.mParentBone = parent_bone;
+
+			// M2Tracks convertion goes here ->
+			boneTemp.mRotation = (M2Track<M2CompQuat>)rotation;
+			boneTemp.mScale = (M2Track<C3Vector<float>>)scale;
+			boneTemp.mTranslation = (M2Track<C3Vector<float>>) translation;
+
+			return boneTemp;
+		}
+
+	};
+	friend InternalData;
+	M2CompBone(C3Vector<float> &vPoint, unsigned __int32 &vFlags) : mPivotPoint(vPoint), mBoneFlags(Flags(vFlags)) { /*EMPTY*/ }
+	M2CompBone() {/*EMPTY AS OF NOW*/ }
+	~M2CompBone() {/*EMPTY AS OF NOW*/ }
+
+	const __int32& GetKeyBoneID() { return m_iKeyBoneID; }
+	const C3Vector<float>& GetPivotPoint() { return mPivotPoint; }
+	const unsigned __int32& GetFlags() { return mBoneFlags; }
+
+
+};
+

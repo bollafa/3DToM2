@@ -64,5 +64,6 @@ void main()
 
 		M2File Ragnaros;
 		Ragnaros.LoadM2FromMemory(pStartAddy);
+		Ragnaros.LoadSkinFromMemory(pSkinStartAddy);
 		
 }

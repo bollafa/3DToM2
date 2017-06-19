@@ -4,6 +4,8 @@
 #include <deque>
 /*
 	Make this API as ABSTRACT as POSSIBLE PLEASE.
+
+	Yay! We ended up with a monolith api! How extendable!
 */
 extern  uint32_t* pStartAddy;
 class M2File
@@ -36,7 +38,8 @@ private:
 			{
 				// Make a pair with Array[iKeyBone] = The Id Of this bone. ( the id:bone
 																			   // is just the place on the array ( it should be minus 1, but alas, the m_keybonalookup table will only be changed here)
-				mkeyBoneLookUp.insert(std::make_pair(dBone.GetKeyBoneID(), mBoneLookUp.size()));
+				//mkeyBoneLookUp.insert(std::make_pair(dBone.GetKeyBoneID(), mBoneLookUp.size()));
+				mkeyBoneLookUp.insert(std::make_pair(dBone.GetKeyBoneID(), mDataTable.size()));
 			}
 
 			mDataTable.push_back(dBone);
@@ -88,20 +91,48 @@ public:
 	// Load from Memory
 
 	void LoadM2FromMemory(void* pStart);
+	void LoadSkinFromMemory(void* pStart);
 private:
 	class SkinFile // *00.skin file.
 	{
 	private:
+		struct SkinHeader
+		{
+//#if VERSION >= Wrath 
+			uint32_t magic;                         // 'SKIN'
+//#endif
+			M2Array vertices;						
+			M2Array indices;
+			M2Array bones;
+			M2Array submeshes;
+			M2Array batches;
+			uint32_t boneCountMax;                  // WoW takes this and divides it by the number of bones in each submesh, then stores the biggest one.
+													// Maximum number of bones per drawcall for each view. Related to (old) GPU numbers of registers. 
+													// Values seen : 256, 64, 53, 21
+			/*
+				  M2Array<unsigned short> vertices ;
+				  M2Array<unsigned short> indices ;
+				  M2Array<ubyte4> bones;
+				  M2Array<M2SkinSection> submeshes;
+				  M2Array<M2Batch> batches;
+				  uint32_t boneCountMax; 
+			
+			*/
+/*#if VERSION >= Cata 
+			M2Array<M2ShadowBatch> shadow_batches;
+#endif*/
+		};
 		// Vector of a group of 4 bytes ( first, second, third, fourth bone index )
-		std::deque<std::array<__int8, 4>> mVertexesProp;
-
+		DataTable<std::array<int8_t, 4>> mVertexesProp;
+		DataTable<uint16_t> mVertexIndices;
+		DataTable<C3Vector<uint16_t>> mTriangles;
 
 	public:
-
+		
 		SkinFile() {}
 		~SkinFile(){}
 		void AddVertexProp(std::array<__int8, 4> VertexProp);
-
+		void LoadSkinFromMemory(void* pStart);
 	};
 	struct M2Header
 	{
@@ -164,13 +195,16 @@ private:
 	template< typename Data >
 	static void LoadTableOfData(unsigned __int32 *pStart, size_t nElements, DataTable<Data>& );
 	
+	template<typename Data, bool magic>
+	static void LoadTableOfData(unsigned __int32 *pStart, size_t nElements, DataTable<Data>&);
+
 	static void LoadTableOfData(unsigned __int32 *pStart, size_t nElements, DataTable<C3Vector<float>>&);
 	
 	static void LoadTableOfData(unsigned __int32 *pStart, size_t nElements, DataTable<fixed16>&);
 
 	static void LoadTableOfData(unsigned __int32 *pStart, size_t nElements, DataTable<uint32_t>&);
 	
-
+	static void LoadTableOfData(unsigned __int32 *pStart, size_t nElements, DataTable<Quat16>&);
 };
 
 template<typename Data>
@@ -184,7 +218,18 @@ static inline void M2File::LoadTableOfData(unsigned __int32* pStart, size_t nEle
 	}
 }
 
-
+/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! EVEN WORSE THAN BAD PRACTICE HOLY-SHIT DELETE THIS CRAP AFTER PROPER CRAP TESTING !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+template<typename Data,bool magic>
+static inline void M2File::LoadTableOfData(unsigned __int32* pStart, size_t nElements, DataTable<Data>& vDataTable)
+{
+	for (unsigned int i = 0; i < nElements; i++)
+	{
+//		unsigned __int32* Place = (pStart + i * sizeof(Data::InternalData));
+		Data vTemp = (Data)(*((Data*)((unsigned __int8*)pStart + (i) * sizeof(Data))));
+		vDataTable.AddElement(vTemp);
+	}
+}
+/*																	END																								*/
 inline void M2File::LoadTableOfData(unsigned __int32 * pStart, size_t nElements, DataTable<C3Vector<float>>& vDataTable)
 {
 	for (unsigned int i = 0; i < nElements; i++)
@@ -211,6 +256,16 @@ inline void M2File::LoadTableOfData(unsigned __int32 * pStart, size_t nElements,
 	{
 		unsigned __int32* Place = (pStart + i * sizeof(C3Vector<float>));
 		uint32_t vTemp = (uint32_t)(*((uint32_t*)((unsigned __int8*)pStart + (i) * sizeof(uint32_t))));
+		vDataTable.AddElement(vTemp);
+	}
+}
+
+inline void M2File::LoadTableOfData(unsigned __int32 * pStart, size_t nElements, DataTable<Quat16>& vDataTable)
+{
+	for (unsigned int i = 0; i < nElements; i++)
+	{
+		unsigned __int32* Place = (pStart + i * sizeof(C3Vector<float>));
+		Quat16 vTemp = (Quat16)(*((Quat16*)((unsigned __int8*)pStart + (i) * sizeof(Quat16))));
 		vDataTable.AddElement(vTemp);
 	}
 }

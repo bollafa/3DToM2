@@ -41,6 +41,7 @@ void M2File::AddVertex(C3Vector<float> vPoint, C3Vector<float> vNormal, std::arr
 }
 #define Cast(x,y) static_cast<x>(y)
 #define _M2Header(x) Cast(M2Header*,x)
+#define _M2Skin(x)	Cast(SkinHeader*,x)
 void M2File::LoadM2FromMemory(void * pStart)
 {
 	pStartAddy = (uint32_t*)pStart;
@@ -68,9 +69,41 @@ void M2File::LoadM2FromMemory(void * pStart)
 	// Now texture weigths!
 	LoadTableOfData(((unsigned __int32*)(((__int8*)pStart) + static_cast<M2Header*>(pStart)->texture_weights.tOffset)), _M2Header(pStart)->texture_weights.tSize, mTextureWeightTable);
 
+	// Bone Table
+
+	LoadTableOfData(((unsigned __int32*)(((__int8*)pStart) + static_cast<M2Header*>(pStart)->bones.tOffset)), _M2Header(pStart)->bones.tSize, mBoneTable);
+
+	
+}
+
+void M2File::LoadSkinFromMemory(void * pStart)
+{
+	M2Skin.LoadSkinFromMemory(pStart);
 }
 
 void M2File::SkinFile::AddVertexProp(std::array<__int8, 4> VertexProp)
 {
-	mVertexesProp.push_back(VertexProp);
+	//mVertexesProp.push_back(VertexProp);
+}
+
+void M2File::SkinFile::LoadSkinFromMemory(void * pStart)
+{
+	// Loading a skin file from a memory address! Fun! (Lol...)
+	if (_M2Skin(pStart)->magic != _byteswap_ulong('SKIN'))
+	{
+		std::cout << "\t<SIGNATURE_NOT_CORRECT>\n" << _M2Header(pStart)->magic << std::endl;
+		return;
+	}
+	std::cout << "<SKIN_FILE> CORRECT_MAGIC </SKIN_FILE>" << std::endl;
+	// Let's load the vertex indices
+
+	LoadTableOfData<uint16_t, true>(((unsigned __int32*)(((__int8*)pStart) + static_cast<SkinHeader*>(pStart)->vertices.tOffset)), _M2Skin(pStart)->vertices.tSize, SkinFile::mVertexIndices);
+
+	// Let's load the triangle sht
+
+	LoadTableOfData< C3Vector<uint16_t>, true >(((unsigned __int32*)(((__int8*)pStart) + static_cast<SkinHeader*>(pStart)->indices.tOffset)), _M2Skin(pStart)->indices.tSize/3, SkinFile::mTriangles);
+
+	// Let's load vertex properties
+
+	LoadTableOfData<std::array<int8_t, 4>, true>(((unsigned __int32*)(((__int8*)pStart) + static_cast<SkinHeader*>(pStart)->bones.tOffset)), _M2Skin(pStart)->bones.tSize, SkinFile::mVertexesProp);
 }
