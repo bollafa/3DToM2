@@ -1,6 +1,12 @@
 #include <iostream>
 #include <Windows.h>
 #include "M2File.h"
+
+/* TESTING ASSIMP - DELETE LATER */
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+/* END */
 void main()
 {
 	
@@ -66,4 +72,24 @@ void main()
 		Ragnaros.LoadM2FromMemory(pStartAddy);
 		Ragnaros.LoadSkinFromMemory(pSkinStartAddy);
 		
+
+		// DELETE START - TESTING ASSIMP 
+
+		Assimp::Importer importer;
+		const aiScene* ai_Scene = importer.ReadFile("Crate/Crate1", aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
+
+		if (!ai_Scene || ai_Scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !ai_Scene->mRootNode)
+		{
+			std::cout << "ERROR::ASSIMP::" << importer.GetErrorString() << std::endl;
+			return;
+		}
+
+
+
+		// Loading vertices, i know, it's shit. But who cares.
+
+
+
+
+		// DELETE END
 }

@@ -1,6 +1,7 @@
 #include "M2File.h"
 #include "M2Types.h"
 #include <iostream>
+
 uint32_t* pStartAddy;
 /*void M2File::AddLookUpElement(std::map<uint32_t, __int16>& _inMap, uint32_t nArrayIndex, __int16 nPointToIndex)
 {
