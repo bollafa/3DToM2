@@ -126,7 +126,7 @@ private:
 		DataTable<std::array<int8_t, 4>> mVertexesProp;
 		DataTable<uint16_t> mVertexIndices;
 		DataTable<C3Vector<uint16_t>> mTriangles;
-
+		DataTable<M2SkinSection> mSubmeshes;
 	public:
 		
 		SkinFile() {}

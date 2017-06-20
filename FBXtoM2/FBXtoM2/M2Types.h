@@ -722,3 +722,39 @@ public:
 
 };
 
+class M2SkinSection
+{
+private:
+	
+public:
+	struct InternalData
+	{
+		uint16_t skinSectionId;       // Mesh part ID, see below.
+		uint16_t Level;               // (level << 16) is added (|ed) to startTriangle and alike to avoid having to increase those fields to uint32s.
+		uint16_t vertexStart;         // Starting vertex number.
+		uint16_t vertexCount;         // Number of vertices.
+		uint16_t indexStart;          // Starting triangle index (that's 3* the number of triangles drawn so far).
+		uint16_t indexCount;          // Number of triangle indices.
+		uint16_t boneCount;           // Number of elements in the bone lookup table.
+		uint16_t boneComboIndex;      // Starting index in the bone lookup table.
+		uint16_t boneInfluences;      // <= 4
+									  // from <=BC documentation: Highest number of bones needed at one time in this Submesh --Tinyn (wowdev.org) 
+									  // In 2.x this is the amount of of bones up the parent-chain affecting the submesh --NaK
+		uint16_t centerBoneIndex;
+		C3Vector<float> centerPosition;     // Average position of all the vertices in the sub mesh.
+											//#if VERSION >= BC 
+		C3Vector<float> sortCenterPosition; // The center of the box when an axis aligned box is built around the vertices in the submesh.
+		float sortRadius;             // Distance of the vertex farthest from CenterBoundingBox.
+									  //#endif
+		operator M2SkinSection()
+		{
+			M2SkinSection temp;
+			temp.mNewBrain = *this;
+			return temp;
+		}
+	};
+	
+	M2SkinSection() {}
+private:
+	InternalData mNewBrain;
+};

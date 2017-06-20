@@ -106,4 +106,8 @@ void M2File::SkinFile::LoadSkinFromMemory(void * pStart)
 	// Let's load vertex properties
 
 	LoadTableOfData<std::array<int8_t, 4>, true>(((unsigned __int32*)(((__int8*)pStart) + static_cast<SkinHeader*>(pStart)->bones.tOffset)), _M2Skin(pStart)->bones.tSize, SkinFile::mVertexesProp);
+
+	// Let's load submeshes
+
+	LoadTableOfData(((unsigned __int32*)(((__int8*)pStart) + static_cast<SkinHeader*>(pStart)->submeshes.tOffset)), _M2Skin(pStart)->submeshes.tSize, SkinFile::mSubmeshes);
 }
